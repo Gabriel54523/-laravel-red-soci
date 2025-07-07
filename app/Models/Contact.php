@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Contact extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'user_id',
         'phone_number',
@@ -19,13 +17,35 @@ class Contact extends Model
         'is_online',
     ];
 
-    public function user()
+    protected $casts = [
+        'last_seen_at' => 'datetime',
+        'is_online' => 'boolean',
+    ];
+
+    /**
+     * Get the user that owns this contact
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Get conversations with this contact
+     */
     public function conversations()
     {
-        return $this->hasMany(Conversation::class);
+        return $this->hasMany(Conversation::class, 'contact_id');
     }
-} 
+
+    /**
+     * Update contact's online status
+     */
+    public function updateOnlineStatus($isOnline = true)
+    {
+        $this->update([
+            'is_online' => $isOnline,
+            'last_seen_at' => now(),
+        ]);
+    }
+}
